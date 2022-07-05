@@ -118,8 +118,9 @@ class Probe:
         if mtime == self._local_config_mtime:
             return
         config = ConfigParser()
+        config.read(self._config_path)
         self._local_config_mtime = mtime
-        self._local_config = config.read(self._config_path)
+        self._local_config = config
 
     def _asset_config(self, asset_id: int):
         try:
