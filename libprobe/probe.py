@@ -145,12 +145,15 @@ class Probe:
         desired_checks = set(new_checks_config)
 
         for path in set(self._checks):
-            # loop over the current checks; if no longer required, or if the
-            # check is required but config has changed, pop and cancel the task
-            if path not in desired_checks or \
-                    new_checks_config[path] != self._checks_config[path]:
-                # a task may already have been cancelled, but this is fine
+            if path not in desired_checks:
+                # the check is no longer required, pop and cancel the task
                 self._checks.pop(path).cancel()
+            elif new_checks_config[path] != self._checks_config[path] and \
+                    self._checks[path].cancelled():
+                # this task is desired but has previously been cancelled;
+                # not the config has been changed so make sure the task will
+                # be re-scheduled.
+                del self._checks[path]
 
         # overwite check_config
         self._checks_config = new_checks_config
