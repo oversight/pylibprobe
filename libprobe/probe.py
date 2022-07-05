@@ -130,11 +130,11 @@ class Probe:
 
         try:
             return self._local_config[f'{self.name}/{asset_id}']
-        except NoSectionError:
+        except (NoSectionError, KeyError):
             pass
         try:
             return self._local_config[self.name]
-        except NoSectionError:
+        except (NoSectionError, KeyError):
             return {}
 
     def _on_assets(self, assets):
