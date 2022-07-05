@@ -151,8 +151,7 @@ class Probe:
             elif new_checks_config[path] != self._checks_config[path] and \
                     self._checks[path].cancelled():
                 # this task is desired but has previously been cancelled;
-                # not the config has been changed so make sure the task will
-                # be re-scheduled.
+                # now the config has been changed so we want to re-scheduled.
                 del self._checks[path]
 
         # overwite check_config
