@@ -118,8 +118,9 @@ class Probe:
         if mtime == self._local_config_mtime:
             return
         config = ConfigParser()
+        config.read(self._config_path)
         self._local_config_mtime = mtime
-        self._local_config = config.read(self._config_path)
+        self._local_config = config
 
     def _asset_config(self, asset_id: int):
         try:
@@ -129,11 +130,11 @@ class Probe:
 
         try:
             return self._local_config[f'{self.name}/{asset_id}']
-        except NoSectionError:
+        except (NoSectionError, KeyError):
             pass
         try:
             return self._local_config[self.name]
-        except NoSectionError:
+        except (NoSectionError, KeyError):
             return {}
 
     def _on_assets(self, assets):

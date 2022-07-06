@@ -5,7 +5,6 @@ twine upload --repository pypi dist/pylibprobe-x.x.x.tar.gz
 """
 from setuptools import setup, find_packages
 from libprobe.version import __version__ as version
-from setuptools import setup, find_packages
 
 try:
     with open('README.md', 'r') as f:
@@ -32,7 +31,7 @@ setup(
     download_url=(
         'https://github.com/oversight/'
         'pylibprobe/tarball/v{}'.format(version)),
-    keywords=['parser', 'grammar', 'autocompletion'],
+    keywords=['monitoring', 'oversight', 'probe'],
     install_requires=install_requires,
     classifiers=[
         'Intended Audience :: Developers',
