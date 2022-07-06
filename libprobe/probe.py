@@ -7,11 +7,17 @@ from configparser import ConfigParser, NoSectionError
 from pathlib import Path
 from setproctitle import setproctitle
 from typing import Optional
-from .exceptions import IgnoreResultException, IgnoreCheckException
+from .exceptions import (
+    CheckException,
+    IgnoreResultException,
+    IgnoreCheckException,
+    IncompleteResultException,
+)
 from .logger import setup_logger
 from .net.package import Package
 from .protocol import AgentcoreProtocol
 from .asset import Asset
+from .severity import Severity
 
 
 AGENTCORE_HOST = os.getenv('AGENTCORE_HOST', '127.0.0.1')
@@ -208,13 +214,21 @@ class Probe:
                             'expecting type `dict` as check result '
                             f'but got type `{type(res).__name__}`')
                 except asyncio.TimeoutError:
-                    raise Exception('timed out')
+                    raise CheckException('timed out')
                 except asyncio.CancelledError:
                     if my_task is self._checks.get(path):
                         # cancelled from within, just raise
-                        raise Exception('cancelled')
+                        raise CheckException('cancelled')
                     logging.warning(f'cancelled; {asset}')
                     break
+                except (CheckException,
+                        IgnoreResultException,
+                        IgnoreResultException):
+                    raise
+                except Exception as e:
+                    # fall-back to exception class name
+                    error_msg = str(e) or type(e).__name__
+                    raise CheckException(error_msg)
 
             except IgnoreResultException:
                 logging.info(f'ignore result; {asset}')
@@ -223,11 +237,17 @@ class Probe:
                 logging.info(f'ignore check; {asset}')
                 break
 
-            except Exception as e:
-                # fall-back to exception class name
-                error_msg = str(e) or type(e).__name__
-                logging.error(f'check error; {asset} error: `{error_msg}`')
-                self.send(path, (None, {"error": error_msg}), ts_next)
+            except IncompleteResultException as e:
+                logging.warning(
+                    'incomplete result; '
+                    f'{asset} error: `{e}` severity: {e.severity}')
+                self.send(path, (e.result, e.to_dict()), ts_next)
+
+            except CheckException as e:
+                logging.error(
+                    'check error; '
+                    f'{asset} error: `{e}` severity: {e.severity}')
+                self.send(path, (None, e.to_dict()), ts_next)
 
             else:
                 logging.debug(f'run check ok; {asset}')

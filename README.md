@@ -27,8 +27,13 @@ import asyncio
 import logging
 from libprobe.asset import Asset
 from libprobe.probe import Probe
-from libprobe.exceptions import IgnoreResultException, IgnoreCheckException
-
+from libprobe.severity import Severity
+from libprobe.exceptions import (
+    CheckException,
+    IgnoreResultException,
+    IgnoreCheckException,
+    IncompleteResultException,
+)
 
 __version__ = "3.0.0"  # Use > 3.x version numbering
 
@@ -51,12 +56,24 @@ async def my_first_check(asset: Asset, asset_config: dict, check_config: dict):
         # nothing will be send to Oversight for this check iteration and the
         # check will not start again until the probe restarts or configuration
         # has been changed;
-        raise IgnoreCheckException("not applicable for this asset")
+        raise IgnoreCheckException()
 
     if "something_has_happened":
         # send a check error to Oversight because something has happened which
-        # prevents us from building a check result;
+        # prevents us from building a check result; The default severity for a
+        # CheckException is MEDIUM but this can be overwritten;
+        raise CheckException("something went wrong", severity=Severity.LOW)
+
+    if "something_unexpected_has_happened":
+        # other exceptions will be converted to CheckException, MEDIUM severity
         raise Exception("something went wrong")
+
+    result = {"myType": {"myItem": {"myMetric": "some value"}}}
+
+    if "result_is_incomplete":
+        # optionally, IncompleteResultException can be given another severity;
+        # the default severity is LOW.
+        raise IncompleteResultException('missing type x', result)
 
     # Use the asset in logging; this will include asset info and the check name
     logging.info(f"log something; {asset}")
@@ -66,6 +83,8 @@ async def my_first_check(asset: Asset, asset_config: dict, check_config: dict):
 
 
 if __name__ == "__main__":
+    raise IncompleteResultException('missing type x', {})
+
     checks = {
         "myFirstCheck": my_first_check,
     }

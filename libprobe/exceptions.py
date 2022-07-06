@@ -1,5 +1,8 @@
+from .severity import Severity
+
+
 class IgnoreResultException(Exception):
-    """IgnoreResultException should be raised by a check if the result needs
+    """IgnoreResultException must be raised by a check if the result needs
     to be ignored.
 
     - Nothing for this check will be returned to the AgentCore.
@@ -9,7 +12,7 @@ class IgnoreResultException(Exception):
 
 
 class IgnoreCheckException(Exception):
-    """IgnoreResultException should be raised by a check if the result needs
+    """IgnoreResultException must be raised by a check if the result needs
     to be ignored and we no longer want this check to run.
 
     - Nothing for this check will be returned to the AgentCore.
@@ -17,3 +20,32 @@ class IgnoreCheckException(Exception):
       received.
     """
     pass
+
+
+class CheckException(Exception):
+    """CheckException is the basic check exception."""
+    def __init__(self, msg: str, severity: Severity = Severity.MEDIUM):
+        assert msg, 'CheckException message must not be empty'
+        self.severity = severity
+        super().__init__(msg)
+
+    def to_dict(self):
+        return {
+            "error": self.__str__(),
+            "severity": self.severity.value
+        }
+
+
+class IncompleteResultException(CheckException):
+    """IncompleteResultException must be raised when you want to return data
+    together with a CheckError; With an empty result (empty dict), this
+    exception will thus clear the previous check data.
+    """
+    def __init__(
+            self,
+            msg: str,
+            result: dict,
+            severity: Severity = Severity.MEDIUM):
+        assert isinstance(result, dict)
+        super().__init__(msg, severity=severity)
+        self.result = result
