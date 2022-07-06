@@ -178,7 +178,7 @@ class Probe:
     async def _run_check_loop(self, path: tuple):
         _, asset_id, _ = path
         (asset_name, check_name), config = self._checks_config[path]
-        interval = config.get('interval')
+        interval = config.get('_interval')
         fun = self._checks_funs[check_name]
         asset = Asset(asset_id, asset_name, check_name)
 
@@ -200,7 +200,7 @@ class Probe:
 
             asset_config = self._asset_config(asset.id)
             _, config = self._checks_config[path]
-            interval = config.get('interval')
+            interval = config.get('_interval')
             timeout = 0.8 * interval
 
             logging.debug(f'run check; {asset}')
