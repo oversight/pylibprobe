@@ -32,7 +32,7 @@ class AgentcoreProtocol(Protocol):
             return
         future.set_result(pkg.data)
 
-    def _on_faf_assets(self, pkg):
+    def _on_faf_assets(self, pkg: Package):
         logging.debug(f"on assets; data size: {len(pkg.data)}")
         self._on_assets(pkg.data)
 
@@ -46,7 +46,7 @@ class AgentcoreProtocol(Protocol):
         )
         self.transport.write(resp_pkg.to_bytes())
 
-    def on_package_received(self, pkg, _map={
+    def on_package_received(self, pkg: Package, _map={
         PROTO_RES_ANNOUNCE: _on_res_announce,
         PROTO_FAF_ASSETS: _on_faf_assets,
         PROTO_REQ_INFO: _on_req_info,
