@@ -54,7 +54,7 @@ class Probe:
         try:
             self._read_local_config()
         except Exception:
-            logging.exception(f"config file invalid: {config_path}\n\n")
+            logging.exception(f"config file invalid: {config_path}")
             exit(0)
 
     def is_connected(self):
