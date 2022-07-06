@@ -1,4 +1,7 @@
-# Python Library for building Oversight Probes
+[![CI](https://github.com/oversight/pylibprobe/workflows/CI/badge.svg)](https://github.com/oversight/pylibprobe/actions)
+[![Release Version](https://img.shields.io/github/release/oversight/pylibprobe)](https://github.com/oversight/pylibprobe/releases)
+
+# Python library for building Oversight Probes
 
 > This library must be used for building version 3.x probe versions only.
 
@@ -56,7 +59,7 @@ async def my_first_check(asset: Asset, asset_config: dict, check_config: dict):
         raise Exception("something went wrong")
 
     # Use the asset in logging; this will include asset info and the check name
-    logging.info(f"log something; {asset})
+    logging.info(f"log something; {asset}")
 
     # A check result may have multiple types, items, and/or metrics
     return {"myType": {"myItem": {"myMetric": "some value"}}}
