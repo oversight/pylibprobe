@@ -68,8 +68,8 @@ class Protocol(asyncio.Protocol):
                 self._package.extract_data_from(self._buffered_data)
             except KeyError as e:
                 logging.error(f'unsupported package received: {e}')
-            except Exception as e:
-                logging.exception(e)
+            except Exception:
+                logging.exception('failed to unpack data into a package')
                 # empty the byte-array to recover from this error
                 self._buffered_data.clear()
             else:
@@ -84,18 +84,18 @@ class Protocol(asyncio.Protocol):
         try:
             future, task = self._requests.pop(pid)
         except KeyError:
-            logging.error('timed out package id not found: {}'.format(
-                self._package.pid))
+            logging.error(
+                f"timed out package id not found: {self._package.pid}")
             return None
 
         future.set_exception(TimeoutError(
-            f'request timed out on pkg id {pid}'))
+            f'request timed out on package id: {pid}'))
 
     def _get_future(self, pkg, default_=(None, None)):
         future, task = self._requests.pop(pkg.pid, default_)
         if future is None:
             logging.error(
-                f'got a response on pkg id {pkg.pid} but the original '
+                f'got a response on package id {pkg.pid} but the original '
                 'request has probably timed-out'
             )
             return

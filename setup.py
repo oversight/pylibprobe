@@ -13,9 +13,9 @@ except IOError:
     long_description = ''
 
 install_requires = [
-    'colorlog>=6.6.0',
-    'msgpack>=1.0.4',
-    'setproctitle>=1.2.3',
+    'colorlog',
+    'msgpack',
+    'setproctitle',
 ]
 
 setup(

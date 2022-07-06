@@ -24,7 +24,7 @@ class AgentcoreProtocol(Protocol):
         self._on_assets = _on_assets
 
     def _on_res_announce(self, pkg):
-        logging.debug(f'on announce {len(pkg.data)}')
+        logging.debug(f"on announce; data size: {len(pkg.data)}")
         self._on_assets(pkg.data)
 
         future = self._get_future(pkg)
@@ -33,11 +33,11 @@ class AgentcoreProtocol(Protocol):
         future.set_result(pkg.data)
 
     def _on_faf_assets(self, pkg):
-        logging.debug(f'on assets {len(pkg.data)}')
+        logging.debug(f"on assets; data size: {len(pkg.data)}")
         self._on_assets(pkg.data)
 
     def _on_req_info(self, pkg: Package):
-        logging.debug(f'on heartbeat')
+        logging.debug(f"on heartbeat; data size: {len(pkg.data)}")
 
         resp_pkg = Package.make(
             AgentcoreProtocol.PROTO_RES_INFO,

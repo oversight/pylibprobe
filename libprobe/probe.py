@@ -49,12 +49,12 @@ class Probe:
         self._checks = {}
 
         if not os.path.exists(config_path):
-            logging.error('config file not found')
+            logging.error(f"config file not found: {config_path}")
             exit(0)
         try:
             self._read_local_config()
         except Exception:
-            logging.exception('config file invalid\n\n')
+            logging.exception(f"config file invalid: {config_path}\n\n")
             exit(0)
 
     def is_connected(self):
@@ -87,7 +87,8 @@ class Probe:
         try:
             _, self._protocol = await asyncio.wait_for(conn, timeout=10)
         except Exception as e:
-            logging.error(f'connecting to agentcore failed: {e}')
+            error_msg = str(e) or type(e).__name__
+            logging.error(f'connecting to agentcore failed: {error_msg}')
         else:
             pkg = Package.make(
                 AgentcoreProtocol.PROTO_REQ_ANNOUNCE,
