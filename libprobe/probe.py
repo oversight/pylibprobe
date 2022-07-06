@@ -11,11 +11,15 @@ from .exceptions import IgnoreResultException, IgnoreCheckException
 from .logger import setup_logger
 from .net.package import Package
 from .protocol import AgentcoreProtocol
+from .asset import Asset
 
 
 AGENTCORE_HOST = os.getenv('AGENTCORE_HOST', '127.0.0.1')
 AGENTCORE_PORT = int(os.getenv('AGENTCORE_PORT', 8750))
 OVERSIGHT_CONF_FN = os.getenv('OVERSIGHT_CONF', '/data/config/oversight.conf')
+
+# Index in names
+ASSET_NAME_IDX, CHECK_NAME_IDX = range(2)
 
 
 class Probe:
@@ -139,9 +143,9 @@ class Probe:
 
     def _on_assets(self, assets):
         new_checks_config = {
-            tuple(path): (check_name, config)
-            for path, check_name, config in assets
-            if check_name in self._checks_funs}
+            tuple(path): (names, config)
+            for path, names, config in assets
+            if names[CHECK_NAME_IDX] in self._checks_funs}
 
         desired_checks = set(new_checks_config)
 
@@ -166,10 +170,11 @@ class Probe:
 
     async def _run_check_loop(self, path: tuple):
         _, asset_id, _ = path
-        check_name, config = self._checks_config[path]
+        (asset_name, check_name), config = self._checks_config[path]
         interval = config.get('interval')
         fun = self._checks_funs[check_name]
-        asset_log = f'asset: `{asset_id}` check: `{check_name}`'
+        asset = Asset(asset_id, asset_name, check_name)
+
         my_task = self._checks[path]
 
         assert isinstance(interval, int) and interval > 0
@@ -183,20 +188,20 @@ class Probe:
             try:
                 await asyncio.sleep(ts_next - ts)
             except asyncio.CancelledError:
-                logging.info(f'cancelled, {asset_log}')
+                logging.info(f'cancelled; {asset}')
                 break
 
-            asset_config = self._asset_config(asset_id)
+            asset_config = self._asset_config(asset.id)
             _, config = self._checks_config[path]
             interval = config.get('interval')
             timeout = 0.8 * interval
 
-            logging.debug(f'run check, {asset_log}')
+            logging.debug(f'run check; {asset}')
 
             try:
                 try:
                     res = await asyncio.wait_for(
-                        fun(asset_config, config), timeout=timeout)
+                        fun(asset, asset_config, config), timeout=timeout)
                     if not isinstance(res, dict):
                         raise TypeError(
                             'expecting type `dict` as check result '
@@ -207,24 +212,24 @@ class Probe:
                     if my_task is self._checks.get(path):
                         # cancelled from within, just raise
                         raise Exception('cancelled')
-                    logging.warning(f'cancelled, {asset_log}')
+                    logging.warning(f'cancelled; {asset}')
                     break
 
             except IgnoreResultException:
-                logging.info(f'ignore result, {asset_log}')
+                logging.info(f'ignore result; {asset}')
 
             except IgnoreCheckException:
-                logging.info(f'ignore check, {asset_log}')
+                logging.info(f'ignore check; {asset}')
                 break
 
             except Exception as e:
                 # fall-back to exception class name
                 error_msg = str(e) or type(e).__name__
-                logging.error(f'check error, {asset_log} error: `{error_msg}`')
+                logging.error(f'check error; {asset} error: `{error_msg}`')
                 self.send(path, (None, {"error": error_msg}), ts_next)
 
             else:
-                logging.debug(f'run check ok, {asset_log}')
+                logging.debug(f'run check ok; {asset}')
                 self.send(path, (res, None), ts_next)
 
             ts = time.time()
