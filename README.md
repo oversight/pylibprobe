@@ -83,8 +83,6 @@ async def my_first_check(asset: Asset, asset_config: dict, check_config: dict):
 
 
 if __name__ == "__main__":
-    raise IncompleteResultException('missing type x', {})
-
     checks = {
         "myFirstCheck": my_first_check,
     }
