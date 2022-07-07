@@ -234,6 +234,8 @@ class Probe:
                 logging.info(f'ignore result; {asset}')
 
             except IgnoreCheckException:
+                # log as warning; the user is able to prevent these warning by
+                # disabling the checks which are not relevant for the asset;
                 logging.warning(f'ignore check; {asset}')
                 break
 
