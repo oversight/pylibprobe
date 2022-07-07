@@ -234,7 +234,7 @@ class Probe:
                 logging.info(f'ignore result; {asset}')
 
             except IgnoreCheckException:
-                logging.info(f'ignore check; {asset}')
+                logging.warning(f'ignore check; {asset}')
                 break
 
             except IncompleteResultException as e:
