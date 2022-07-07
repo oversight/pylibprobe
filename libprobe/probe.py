@@ -63,10 +63,10 @@ class Probe:
             logging.exception(f"config file invalid: {config_path}")
             exit(0)
 
-    def is_connected(self):
+    def is_connected(self) -> bool:
         return self._protocol is not None and self._protocol.is_connected()
 
-    def is_connecting(self):
+    def is_connecting(self) -> bool:
         return self._connecting
 
     async def start(self):
@@ -108,7 +108,7 @@ class Probe:
         finally:
             self._connecting = False
 
-    def send(self, path, rows, ts):
+    def send(self, path: tuple, rows: dict, ts: float):
         _, asset_id, _ = path
         pkg = Package.make(
             AgentcoreProtocol.PROTO_FAF_DUMP,
@@ -133,7 +133,7 @@ class Probe:
         self._local_config_mtime = mtime
         self._local_config = config
 
-    def _asset_config(self, asset_id: int):
+    def _asset_config(self, asset_id: int) -> dict:
         try:
             self._read_local_config()
         except Exception:
@@ -148,7 +148,7 @@ class Probe:
         except (NoSectionError, KeyError):
             return {}
 
-    def _on_assets(self, assets):
+    def _on_assets(self, assets: list):
         new_checks_config = {
             tuple(path): (names, config)
             for path, names, config in assets
