@@ -23,7 +23,7 @@ class AgentcoreProtocol(Protocol):
         super().__init__()
         self._on_assets = _on_assets
 
-    def _on_res_announce(self, pkg):
+    def _on_res_announce(self, pkg: Package):
         logging.debug(f"on announce; data size: {len(pkg.data)}")
         self._on_assets(pkg.data)
 
