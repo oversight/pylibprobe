@@ -221,9 +221,9 @@ class Probe:
                         raise CheckException('cancelled')
                     logging.warning(f'cancelled; {asset}')
                     break
-                except (CheckException,
+                except (IgnoreCheckException,
                         IgnoreResultException,
-                        IgnoreResultException):
+                        CheckException):
                     raise
                 except Exception as e:
                     # fall-back to exception class name
