@@ -3,7 +3,8 @@ import logging
 import os
 import random
 import time
-from configparser import ConfigParser, NoSectionError
+import yaml
+from cryptography.fernet import Fernet
 from pathlib import Path
 from setproctitle import setproctitle
 from typing import Optional
@@ -18,14 +19,20 @@ from .net.package import Package
 from .protocol import AgentcoreProtocol
 from .asset import Asset
 from .severity import Severity
+from .config import encrypt, decrypt, get_config
 
 
 AGENTCORE_HOST = os.getenv('AGENTCORE_HOST', '127.0.0.1')
 AGENTCORE_PORT = int(os.getenv('AGENTCORE_PORT', 8750))
-OVERSIGHT_CONF_FN = os.getenv('OVERSIGHT_CONF', '/data/config/oversight.conf')
+OVERSIGHT_CONF_FN = os.getenv('OVERSIGHT_CONF', '/data/config/oversight.yaml')
 
 # Index in names
 ASSET_NAME_IDX, CHECK_NAME_IDX = range(2)
+
+# This is the Oversight encryption key used for local configuration files.
+# Note that this is not intended as a real security measure but prevents users
+# from reading a passwords directly from open configuration files.
+FERNET = Fernet(b"4DFfx9LZBPvwvCpwmsVGT_HzjgiGUHduP1kq_L2Fbjw=")
 
 
 class Probe:
@@ -125,12 +132,31 @@ class Probe:
         self._protocol = None
 
     def _read_local_config(self):
-        mtime = self._config_path.stat().st_mtime
-        if mtime == self._local_config_mtime:
+        if self._config_path.stat().st_mtime == self._local_config_mtime:
             return
-        config = ConfigParser()
-        config.read(self._config_path)
-        self._local_config_mtime = mtime
+
+        with open(self._config_path, 'r') as file:
+            config = yaml.safe_load(file)
+
+        if config:
+            # First encrypt everything
+            encrypt(config, FERNET)
+
+            # Re-write the file
+            with open(self._config_path, 'w') as file:
+                file.write("""
+# WARNING: Oversight will make `password` and `secret` values unreadable but
+# this must not be regarded as true encryption as the encryption key is
+# publically available.
+""".lstrip())
+                file.write(yaml.dump(config))
+
+            # Now decrypt everything so we can use the configuration
+            decrypt(config, FERNET)
+        else:
+            config = {}
+
+        self._local_config_mtime = self._config_path.stat().st_mtime
         self._local_config = config
 
     def _asset_config(self, asset_id: int) -> dict:
@@ -139,14 +165,7 @@ class Probe:
         except Exception:
             logging.warning('new config file invalid, keep using previous')
 
-        try:
-            return self._local_config[f'{self.name}/{asset_id}']
-        except (NoSectionError, KeyError):
-            pass
-        try:
-            return self._local_config[self.name]
-        except (NoSectionError, KeyError):
-            return {}
+        return get_config(self._local_config, self.name, asset_id)
 
     def _on_assets(self, assets: list):
         new_checks_config = {
