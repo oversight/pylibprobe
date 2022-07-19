@@ -18,16 +18,12 @@ exampleProbe:
 def encrypt(layer, fernet):
     for k, v in layer.items():
         if k in ('secret', 'password') and isinstance(v, str):
-            layer[k] = {
-                "encrypted": fernet.encrypt(str.encode(v))
-            }
-
-        if isinstance(v, (list, tuple)):
+            layer[k] = {"encrypted": fernet.encrypt(str.encode(v))}
+        elif isinstance(v, (list, tuple)):
             for item in v:
                 if isinstance(item, dict):
                     encrypt(item, fernet)
-
-        if isinstance(v, dict):
+        elif isinstance(v, dict):
             encrypt(v, fernet)
 
 
@@ -37,13 +33,11 @@ def decrypt(layer, fernet):
             ecrypted = v.get("encrypted")
             if ecrypted and isinstance(ecrypted, bytes):
                 layer[k] = fernet.decrypt(ecrypted).decode()
-
-        if isinstance(v, (list, tuple)):
+        elif isinstance(v, (list, tuple)):
             for item in v:
                 if isinstance(item, dict):
                     decrypt(item, fernet)
-
-        if isinstance(v, dict):
+        elif isinstance(v, dict):
             decrypt(v, fernet)
 
 
