@@ -117,16 +117,16 @@ class Probe:
 
     def send(self, path: tuple, result: dict, error: dict, ts: float):
         _, asset_id, _ = path
+        check_data = {
+            'result': result,
+            'error': error,
+            'duration': time.time() - ts,
+            'timestamp': ts,
+        }
         pkg = Package.make(
             AgentcoreProtocol.PROTO_FAF_DUMP,
             partid=asset_id,
-            data={
-                'path': path,
-                'result': result,
-                'error': error,
-                'duration': time.time() - ts,
-                'timestamp': ts,
-            }
+            data=[path, check_data]
         )
 
         if self._protocol and self._protocol.transport:
