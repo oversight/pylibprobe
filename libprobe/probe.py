@@ -120,8 +120,10 @@ class Probe:
         check_data = {
             'result': result,
             'error': error,
-            'duration': time.time() - ts,
-            'timestamp': ts,
+            'framework': {
+                'duration': time.time() - ts,
+                'timestamp': ts,
+            }
         }
         pkg = Package.make(
             AgentcoreProtocol.PROTO_FAF_DUMP,
