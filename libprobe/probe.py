@@ -115,12 +115,20 @@ class Probe:
         finally:
             self._connecting = False
 
-    def send(self, path: tuple, rows: dict, ts: float):
+    def send(self, path: tuple, result: dict, error: dict, ts: float):
         _, asset_id, _ = path
+        check_data = {
+            'result': result,
+            'error': error,
+            'framework': {
+                'duration': time.time() - ts,
+                'timestamp': ts,
+            }
+        }
         pkg = Package.make(
             AgentcoreProtocol.PROTO_FAF_DUMP,
             partid=asset_id,
-            data=[path, rows, ts]
+            data=[path, check_data]
         )
 
         if self._protocol and self._protocol.transport:
@@ -262,17 +270,17 @@ class Probe:
                 logging.warning(
                     'incomplete result; '
                     f'{asset} error: `{e}` severity: {e.severity}')
-                self.send(path, (e.result, e.to_dict()), ts_next)
+                self.send(path, e.result, e.to_dict(), ts_next)
 
             except CheckException as e:
                 logging.error(
                     'check error; '
                     f'{asset} error: `{e}` severity: {e.severity}')
-                self.send(path, (None, e.to_dict()), ts_next)
+                self.send(path, None, e.to_dict(), ts_next)
 
             else:
                 logging.debug(f'run check ok; {asset}')
-                self.send(path, (res, None), ts_next)
+                self.send(path, res, None, ts_next)
 
             ts = time.time()
             ts_next += interval
